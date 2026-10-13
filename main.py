@@ -827,11 +827,10 @@ def index_page():
     }
     .auth-illustration {
       display: block;
-      width: min(48vw, 184px);
-      height: min(23dvh, 184px);
+      width: min(88vw, 300px);
+      height: min(27dvh, 210px);
       object-fit: contain;
-      margin: 0 auto 14px;
-      filter: drop-shadow(0 0 24px rgba(34, 197, 94, 0.18));
+      margin: 0 auto 12px;
     }
     .auth-title {
       margin-bottom: 10px;
@@ -1500,10 +1499,10 @@ def index_page():
     <section id="auth-welcome" class="auth-screen">
       <img
         class="auth-illustration"
-        src="/assets/cal-tracker-illustration.png"
-        width="611"
-        height="628"
-        alt=""
+        src="/assets/cal-tracker-welcome.svg"
+        width="420"
+        height="320"
+        alt="Plato saludable con seguimiento de calorías, nutrientes y objetivo de peso"
         fetchpriority="high"
       >
       <div class="auth-brand">Cal AI</div>

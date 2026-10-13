@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320" fill="none">
+  <defs>
+    <linearGradient id="ring" x1="118" y1="62" x2="304" y2="226" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="plate" x1="151" y1="79" x2="270" y2="198" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#202A30"/>
+      <stop offset="1" stop-color="#101519"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="156" y1="102" x2="248" y2="183" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#86EFAC"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <linearGradient id="calories" x1="142" y1="255" x2="279" y2="293" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D3029"/>
+      <stop offset="1" stop-color="#17252A"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="0" y="0" width="420" height="320" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="background"/>
+      <feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="alpha"/>
+      <feGaussianBlur in="alpha" stdDeviation="7"/>
+      <feOffset dy="5"/>
+      <feComposite in2="alpha" operator="out"/>
+      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0.05 0 0 0 0 0.04 0 0 0 .55 0"/>
+      <feBlend in2="background" result="shadow"/>
+      <feBlend in="SourceGraphic" in2="shadow" result="shape"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#soft-shadow)">
+    <circle cx="210" cy="143" r="91" stroke="#26353A" stroke-width="8"/>
+    <circle cx="210" cy="143" r="91" stroke="url(#ring)" stroke-width="8" stroke-linecap="round" stroke-dasharray="418 154" transform="rotate(-124 210 143)"/>
+    <circle cx="210" cy="143" r="73" fill="url(#plate)" stroke="#34434A" stroke-width="2"/>
+    <circle cx="210" cy="143" r="62" stroke="#405057" stroke-width="1.5"/>
+
+    <path d="M173 122c8-17 23-24 36-17 10 5 11 17 6 26-6 11-18 19-35 21-9-8-12-19-7-30Z" fill="url(#leaf)"/>
+    <path d="M185 148c10-10 18-21 23-34" stroke="#D1FAE5" stroke-opacity=".8" stroke-width="2" stroke-linecap="round"/>
+    <path d="M214 107c17-8 33-3 37 11 3 10-4 20-14 25-12 5-25 4-39-4-2-12 3-25 16-32Z" fill="#34D399"/>
+    <path d="M211 137c12-7 23-16 31-27" stroke="#D1FAE5" stroke-opacity=".75" stroke-width="2" stroke-linecap="round"/>
+    <path d="M174 158c9-13 22-17 32-9 8 6 8 16 2 24-7 9-19 14-34 12-6-9-6-19 0-27Z" fill="#22D3EE" fill-opacity=".9"/>
+    <path d="M177 179c10-8 19-16 26-25" stroke="#CFFAFE" stroke-opacity=".8" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="235" cy="157" r="12" fill="#FB7185"/>
+    <circle cx="235" cy="157" r="4" fill="#FECACA"/>
+    <circle cx="247" cy="178" r="7" fill="#F97316"/>
+    <circle cx="247" cy="178" r="2.5" fill="#FED7AA"/>
+    <path d="M219 171c4-7 13-9 20-4 7 5 8 14 3 21-5 7-14 9-21 4-7-5-8-14-2-21Z" fill="#A3E635"/>
+    <path d="M223 187c6-7 11-13 15-21" stroke="#ECFCCB" stroke-opacity=".8" stroke-width="2" stroke-linecap="round"/>
+
+    <rect x="7" y="91" width="111" height="62" rx="18" fill="#141C20" stroke="#29383C"/>
+    <circle cx="27" cy="114" r="9" fill="#163D2B"/>
+    <path d="m23 114 3 3 6-7" stroke="#4ADE80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="117" fill="#94A3A7" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="700" letter-spacing=".65">OBJETIVO SEMANAL</text>
+    <text x="21" y="140" fill="#86EFAC" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="800">+0,3 <tspan fill="#D7E2E3" font-size="10" font-weight="600">kg</tspan></text>
+
+    <rect x="302" y="121" width="111" height="62" rx="18" fill="#141C20" stroke="#29383C"/>
+    <circle cx="322" cy="144" r="9" fill="#10383A"/>
+    <path d="M322 138v12m-4-8 4-4 4 4" stroke="#67E8F9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="337" y="147" fill="#94A3A7" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="700" letter-spacing=".7">PROTEÍNA</text>
+    <text x="316" y="170" fill="#CFFAFE" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="800">32 <tspan fill="#D7E2E3" font-size="10" font-weight="600">g</tspan></text>
+    <rect x="368" y="162" width="29" height="4" rx="2" fill="#314248"/>
+    <rect x="368" y="162" width="21" height="4" rx="2" fill="#22D3EE"/>
+
+    <rect x="139" y="248" width="142" height="49" rx="19" fill="url(#calories)" stroke="#315345"/>
+    <circle cx="164" cy="272" r="12" fill="#1F4934"/>
+    <path d="M164 263c1 4-4 6-4 11a4 4 0 0 0 8 0c0-2-1-4-3-6 0 3-1 4-2 4-1-3 2-5 1-9Z" fill="#86EFAC"/>
+    <text x="185" y="269" fill="#A7B7B6" font-family="Inter,Arial,sans-serif" font-size="8" font-weight="700" letter-spacing="1">TU DÍA</text>
+    <text x="185" y="285" fill="#F0FDF4" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="800">1.850 <tspan fill="#B8C8C3" font-size="9" font-weight="600">kcal</tspan></text>
+  </g>
+</svg>
