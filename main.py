@@ -836,6 +836,22 @@ def index_page():
       width: 100%;
       margin: 0 0 12px;
     }
+    .auth-screen .auth-action-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .auth-button-icon {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 19px;
+    }
+    .google-logo {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+    }
     .auth-back {
       align-self: flex-start;
       margin: 0 0 24px;
@@ -1470,9 +1486,23 @@ def index_page():
       <div class="auth-brand">Cal AI</div>
       <h1 class="auth-title">Tu progreso,<br>sin complicaciones.</h1>
       <p class="auth-description">Inicia sesión para continuar o crea una cuenta y configura tu plan personal.</p>
-      <button id="google-auth-welcome" class="btn-secondary" style="display: none;" onclick="startGoogleLogin()">Continuar con Google</button>
-      <button class="btn-primary" onclick="showAuthForm('login')">Iniciar sesión</button>
-      <button class="btn-secondary" onclick="showAuthForm('register')">Registrarme</button>
+      <button id="google-auth-welcome" class="btn-secondary auth-action-button" style="display: none;" onclick="startGoogleLogin()">
+        <svg class="google-logo" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.44a5.5 5.5 0 0 1-2.39 3.61v3h3.87c2.26-2.08 3.57-5.15 3.57-8.85Z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.96-1.08 7.95-2.92l-3.87-3c-1.08.72-2.46 1.14-4.08 1.14-3.13 0-5.78-2.11-6.73-4.96H1.27v3.09A12 12 0 0 0 12 24Z"/>
+          <path fill="#FBBC05" d="M5.27 14.26a7.2 7.2 0 0 1 0-4.52V6.65H1.27a12 12 0 0 0 0 10.7l4-3.09Z"/>
+          <path fill="#EA4335" d="M12 4.77c1.77 0 3.35.61 4.6 1.8l3.43-3.43A11.53 11.53 0 0 0 12 0 12 12 0 0 0 1.27 6.65l4 3.09C6.22 6.88 8.87 4.77 12 4.77Z"/>
+        </svg>
+        <span>Continuar con Google</span>
+      </button>
+      <button class="btn-primary auth-action-button" onclick="showAuthForm('login')">
+        <i class="auth-button-icon" data-lucide="log-in" aria-hidden="true"></i>
+        <span>Iniciar sesión</span>
+      </button>
+      <button class="btn-secondary auth-action-button" onclick="showAuthForm('register')">
+        <i class="auth-button-icon" data-lucide="user-plus" aria-hidden="true"></i>
+        <span>Registrarme</span>
+      </button>
     </section>
 
     <section id="auth-form" class="auth-screen" style="display: none;">
@@ -1490,7 +1520,10 @@ def index_page():
           <input type="password" id="auth-password" class="input-field" placeholder="Tu contraseña" autocomplete="current-password" required maxlength="1024">
         </div>
         <p id="auth-password-hint" class="auth-description" style="display: none; margin: -4px 0 20px; font-size: 0.8rem;">Usa al menos 12 caracteres.</p>
-        <button id="auth-submit" class="btn-primary" type="submit">Iniciar sesión</button>
+        <button id="auth-submit" class="btn-primary auth-action-button" type="submit">
+          <i class="auth-button-icon" data-lucide="log-in" aria-hidden="true"></i>
+          <span>Iniciar sesión</span>
+        </button>
       </form>
     </section>
   </div>
@@ -2113,8 +2146,10 @@ def index_page():
       mode === 'register'
         ? 'Crea tu cuenta y después configuraremos tus objetivos.'
         : 'Accede a tu diario y continúa con tus objetivos.';
-    document.getElementById('auth-submit').innerText =
-      mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión';
+    document.getElementById('auth-submit').innerHTML = mode === 'register'
+      ? '<i class="auth-button-icon" data-lucide="user-plus" aria-hidden="true"></i><span>Crear cuenta</span>'
+      : '<i class="auth-button-icon" data-lucide="log-in" aria-hidden="true"></i><span>Iniciar sesión</span>';
+    lucide.createIcons();
     document.getElementById('auth-password-hint').style.display =
       mode === 'register' ? 'block' : 'none';
     document.getElementById('auth-password').autocomplete =
