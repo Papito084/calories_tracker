@@ -7,12 +7,14 @@ import base64
 import logging
 from datetime import date
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Literal
 from fastapi import FastAPI, UploadFile, File, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from auth import get_current_user, router as auth_router
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field
@@ -61,6 +63,11 @@ class WeightPayload(BaseModel):
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
 app.include_router(auth_router)
+app.mount(
+    "/assets",
+    StaticFiles(directory=Path(__file__).resolve().parent / "static"),
+    name="assets",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -818,6 +825,14 @@ def index_page():
       letter-spacing: 0.16em;
       text-transform: uppercase;
     }
+    .auth-illustration {
+      display: block;
+      width: min(48vw, 184px);
+      height: min(23dvh, 184px);
+      object-fit: contain;
+      margin: 0 auto 14px;
+      filter: drop-shadow(0 0 24px rgba(34, 197, 94, 0.18));
+    }
     .auth-title {
       margin-bottom: 10px;
       font-size: clamp(1.8rem, 8vw, 2.35rem);
@@ -1483,6 +1498,14 @@ def index_page():
 <div id="modal-login" class="modal-overlay fullscreen-flow open" role="dialog" aria-modal="true" aria-label="Acceso a Cal AI">
   <div class="sheet-card">
     <section id="auth-welcome" class="auth-screen">
+      <img
+        class="auth-illustration"
+        src="/assets/cal-tracker-illustration.png"
+        width="611"
+        height="628"
+        alt=""
+        fetchpriority="high"
+      >
       <div class="auth-brand">Cal AI</div>
       <h1 class="auth-title">Tu progreso,<br>sin complicaciones.</h1>
       <p class="auth-description">Inicia sesión para continuar o crea una cuenta y configura tu plan personal.</p>
