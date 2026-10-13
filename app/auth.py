@@ -15,8 +15,8 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse, RedirectResponse
 
-import database
-from config import settings
+from . import database
+from .config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class RegistrationCredentials(LoginCredentials):
 class AccountProfilePayload(BaseModel):
     username: str = Field(min_length=1, max_length=80)
     first_name: str = Field(default="", max_length=100)
-    last_name: str = Field(default="", max_length=100)
+    nickname: str = Field(default="", max_length=40)
 
 
 def hash_password(password: str) -> str:
@@ -277,7 +277,7 @@ async def update_account_profile(
             user_id=user_id,
             username=username,
             first_name=data.first_name.strip(),
-            last_name=data.last_name.strip(),
+            nickname=data.nickname.strip(),
         )
     except Exception as exc:
         if _is_unique_violation(exc):

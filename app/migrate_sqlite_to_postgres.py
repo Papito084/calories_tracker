@@ -9,7 +9,10 @@ from pathlib import Path
 
 TABLES = ("users", "user_profile", "daily_meals", "weight_logs")
 TARGET_COLUMNS = {
-    "users": ("id", "username", "password_hash", "created_at"),
+    "users": (
+        "id", "username", "password_hash", "created_at", "google_sub", "email",
+        "first_name", "last_name", "nickname",
+    ),
     "user_profile": (
         "id", "user_id", "name", "gender", "age", "height_cm",
         "current_weight_kg", "target_weight_kg", "activity_level", "goal",
@@ -32,7 +35,7 @@ def main() -> None:
     parser.add_argument(
         "--source",
         type=Path,
-        default=Path(__file__).resolve().parent / "cal_ai.db",
+        default=Path(__file__).resolve().parent.parent / "cal_ai.db",
         help="SQLite database file to copy",
     )
     parser.add_argument(
@@ -51,7 +54,7 @@ def main() -> None:
         database_url = "postgresql://" + database_url[len("postgres://"):]
     os.environ["DATABASE_URL"] = database_url
     os.environ.setdefault("JWT_SECRET", secrets.token_urlsafe(48))
-    import database
+    from app import database
     import psycopg
 
     database.init_db()

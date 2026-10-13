@@ -9,7 +9,7 @@ import logging
 import urllib.request
 import urllib.error
 from typing import Dict, Any, Optional
-from config import settings
+from .config import settings
 
 logger = logging.getLogger(__name__)
 

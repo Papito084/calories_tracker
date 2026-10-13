@@ -38,7 +38,7 @@ jobs:
         run: ruff check .
 
       - name: Compile
-        run: python -m compileall -q auth.py config.py database.py main.py nutrition_calc.py vision_service.py
+        run: python -m compileall -q app
 
       - name: Test
         run: pytest

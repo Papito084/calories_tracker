@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 from fastapi import FastAPI, UploadFile, File, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from auth import get_current_user, router as auth_router
+from .auth import get_current_user, router as auth_router
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -20,10 +20,8 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field
 import uvicorn
 
-from config import settings
-import database
-import nutrition_calc
-import vision_service
+from .config import settings
+from . import database, nutrition_calc, vision_service
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +287,7 @@ def index_page():
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0d0f12">
   <title>Calories Tracker — Nutrición y progreso</title>
   <!-- Google Fonts: Inter -->
@@ -332,6 +330,7 @@ def index_page():
       min-height: 100vh;
       min-height: 100dvh;
       overflow-x: hidden;
+      overscroll-behavior-x: none;
     }
     body.flow-open {
       height: 100vh;
@@ -347,7 +346,7 @@ def index_page():
       min-height: 100dvh;
       background-color: var(--bg);
       position: relative;
-      padding-bottom: 100px;
+      padding-bottom: calc(100px + env(safe-area-inset-bottom));
       display: flex;
       flex-direction: column;
       box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
@@ -599,6 +598,11 @@ def index_page():
       position: relative;
       height: 170px;
       width: 100%;
+      min-width: 0;
+    }
+    .chart-container canvas {
+      display: block;
+      max-width: 100%;
     }
 
     /* Section Title */
@@ -710,8 +714,9 @@ def index_page():
     .bottom-nav {
       position: fixed;
       bottom: 0;
-      width: 100%;
-      max-width: 480px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(100%, 480px);
       background: rgba(13, 15, 18, 0.95);
       backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -719,16 +724,18 @@ def index_page():
       justify-content: center;
       align-items: center;
       gap: 12px;
-      padding: 12px 16px 24px 16px;
+      padding: 12px 16px max(12px, env(safe-area-inset-bottom));
       z-index: 50;
     }
 
     .gallery-btn {
+      flex: 1 1 0;
+      min-width: 0;
       background: #1c222c;
       border: 1px solid #2d3646;
       color: #e5e7eb;
       border-radius: 35px;
-      padding: 12px 18px;
+      padding: 12px clamp(10px, 4vw, 18px);
       font-size: 0.95rem;
       font-weight: 700;
       display: flex;
@@ -742,11 +749,13 @@ def index_page():
     }
 
     .scan-btn {
+      flex: 1 1 0;
+      min-width: 0;
       background: linear-gradient(135deg, #22c55e, #16a34a);
       color: #000;
       border: none;
       border-radius: 35px;
-      padding: 12px 24px;
+      padding: 12px clamp(10px, 5vw, 24px);
       font-size: 1rem;
       font-weight: 800;
       display: flex;
@@ -769,25 +778,30 @@ def index_page():
     .modal-overlay {
       position: fixed;
       inset: 0;
+      padding-top: env(safe-area-inset-top);
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(8px);
       z-index: 100;
       display: none;
       justify-content: center;
       align-items: flex-end;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
     .modal-overlay.open {
       display: flex;
     }
     .sheet-card {
       background: #14171d;
-      width: 100%;
-      max-width: 480px;
+      width: min(100%, 480px);
       border-radius: 28px 28px 0 0;
       border-top: 1px solid #2a303c;
-      padding: 24px 20px 40px 20px;
+      padding: 24px 20px max(24px, env(safe-area-inset-bottom));
       max-height: 90vh;
+      max-height: 90dvh;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       animation: slideUp 0.25s ease-out;
     }
     .modal-overlay.fullscreen-flow {
@@ -803,7 +817,7 @@ def index_page():
       height: 100dvh;
       max-height: none;
       margin: 0 auto;
-      padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+      padding: max(20px, env(safe-area-inset-top)) clamp(16px, 6vw, 24px) max(20px, env(safe-area-inset-bottom));
       border: 0;
       border-radius: 0;
       display: flex;
@@ -1026,6 +1040,107 @@ def index_page():
       font-size: 0.9rem;
       font-weight: 700;
       color: #f3f4f6;
+    }
+
+    @media (max-width: 360px) {
+      .top-bar {
+        padding-right: 14px;
+        padding-left: 14px;
+      }
+
+      .card {
+        margin-right: 10px;
+        margin-left: 10px;
+        padding-right: 14px;
+        padding-left: 14px;
+      }
+
+      .macros-grid {
+        gap: 6px;
+        margin-right: 10px;
+        margin-left: 10px;
+      }
+
+      .macro-card {
+        min-width: 0;
+        padding: 12px 8px;
+      }
+
+      .macro-title {
+        flex-wrap: wrap;
+        gap: 2px 6px;
+        font-size: 0.7rem;
+      }
+
+      .target-banner,
+      .weight-card {
+        margin-right: 10px;
+        margin-left: 10px;
+      }
+
+      .meal-item {
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .meal-meta {
+        flex-wrap: wrap;
+        gap: 4px 8px;
+      }
+
+      .bottom-nav {
+        gap: 8px;
+        padding-right: 10px;
+        padding-left: 10px;
+      }
+
+      .gallery-btn,
+      .scan-btn {
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.85rem;
+      }
+
+      .sheet-card {
+        padding-right: 16px;
+        padding-left: 16px;
+        border-radius: 22px 22px 0 0;
+      }
+    }
+
+    @media (min-width: 600px) {
+      .modal-overlay:not(.fullscreen-flow) {
+        align-items: center;
+        padding: 24px 16px;
+      }
+
+      .modal-overlay:not(.fullscreen-flow) .sheet-card {
+        border: 1px solid #2a303c;
+        border-radius: 24px;
+      }
+    }
+
+    @media (max-height: 500px) and (orientation: landscape) {
+      .modal-overlay:not(.fullscreen-flow) {
+        align-items: flex-start;
+      }
+
+      .modal-overlay:not(.fullscreen-flow) .sheet-card {
+        max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
+      }
+
+      .fullscreen-flow .sheet-card {
+        justify-content: flex-start;
+      }
+
+      .auth-illustration {
+        height: 18dvh;
+        margin-bottom: 6px;
+      }
+
+      .auth-description {
+        margin-bottom: 16px;
+      }
     }
 
     /* Notification pill */
@@ -1475,7 +1590,7 @@ def index_page():
     </div>
 
     <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin: 0 0 20px;">
-      Actualiza tu nombre y el usuario que utilizas para iniciar sesión.
+      Actualiza el nombre y el nickname de tu cuenta.
     </p>
 
     <form id="account-profile-form">
@@ -1484,8 +1599,8 @@ def index_page():
         <input type="text" id="account-first-name" class="input-field" autocomplete="given-name" maxlength="100">
       </div>
       <div class="form-group">
-        <label class="form-label" for="account-last-name">Apellidos</label>
-        <input type="text" id="account-last-name" class="input-field" autocomplete="family-name" maxlength="100">
+        <label class="form-label" for="account-nickname">Nickname</label>
+        <input type="text" id="account-nickname" class="input-field" autocomplete="nickname" maxlength="40">
       </div>
       <div class="form-group">
         <label class="form-label" for="account-username">Usuario para iniciar sesión</label>
@@ -1656,7 +1771,7 @@ def index_page():
       const data = await res.json();
       currentAccount = data.account;
       document.getElementById('account-first-name').value = currentAccount.first_name || '';
-      document.getElementById('account-last-name').value = currentAccount.last_name || '';
+      document.getElementById('account-nickname').value = currentAccount.nickname || '';
       document.getElementById('account-username').value = currentAccount.username || '';
     } catch (err) {
       console.error(err);
@@ -1673,7 +1788,7 @@ def index_page():
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           first_name: document.getElementById('account-first-name').value.trim(),
-          last_name: document.getElementById('account-last-name').value.trim(),
+          nickname: document.getElementById('account-nickname').value.trim(),
           username: document.getElementById('account-username').value.trim()
         })
       });

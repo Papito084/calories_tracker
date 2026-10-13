@@ -1,6 +1,6 @@
 import pytest
 
-from nutrition_calc import (
+from app.nutrition_calc import (
     calculate_bmr,
     calculate_nutrition_plan,
     calculate_tdee,

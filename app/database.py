@@ -6,7 +6,7 @@ import re
 from contextlib import closing
 from datetime import date
 from typing import Optional, Dict, Any, List
-from config import settings
+from .config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +208,21 @@ def init_db() -> None:
                         f"ALTER TABLE users ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
                     )
             cursor.execute("INSERT INTO schema_migrations (version) VALUES (?)", (3,))
+        if schema_version < 4:
+            if is_postgres():
+                cursor.execute(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_schema = current_schema() AND table_name = 'users'"
+                )
+                user_columns = {row["column_name"] for row in cursor.fetchall()}
+            else:
+                cursor.execute("PRAGMA table_info(users)")
+                user_columns = {row["name"] for row in cursor.fetchall()}
+            if "nickname" not in user_columns:
+                cursor.execute(
+                    "ALTER TABLE users ADD COLUMN nickname TEXT NOT NULL DEFAULT ''"
+                )
+            cursor.execute("INSERT INTO schema_migrations (version) VALUES (?)", (4,))
         conn.commit()
     finally:
         conn.close()
@@ -218,7 +233,7 @@ def get_user_account(user_id: int) -> Optional[Dict[str, Any]]:
     with closing(get_db_connection()) as conn:
         cursor = get_cursor(conn)
         cursor.execute(
-            "SELECT id, username, first_name, last_name FROM users WHERE id = ?",
+            "SELECT id, username, first_name, nickname FROM users WHERE id = ?",
             (user_id,),
         )
         row = cursor.fetchone()
@@ -229,7 +244,7 @@ def update_user_account(
     user_id: int,
     username: str,
     first_name: str,
-    last_name: str,
+    nickname: str,
 ) -> Dict[str, Any]:
     """Update account identity fields without changing credentials or nutrition data."""
     with closing(get_db_connection()) as conn:
@@ -237,10 +252,10 @@ def update_user_account(
         cursor.execute(
             """
             UPDATE users
-            SET username = ?, first_name = ?, last_name = ?
+            SET username = ?, first_name = ?, nickname = ?
             WHERE id = ?
             """,
-            (username, first_name, last_name, user_id),
+            (username, first_name, nickname, user_id),
         )
         if cursor.rowcount == 0:
             raise LookupError("User account not found")

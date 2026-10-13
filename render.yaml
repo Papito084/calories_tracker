@@ -3,7 +3,7 @@ services:
     name: cal-app
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --workers 2 --access-logfile - --error-logfile - -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
+    startCommand: gunicorn --workers 2 --access-logfile - --error-logfile - -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT
     plan: free
     region: oregon
     envVars:

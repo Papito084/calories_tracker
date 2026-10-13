@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Explicitly load .env file from base directory
 load_dotenv(dotenv_path=BASE_DIR / ".env", override=False)

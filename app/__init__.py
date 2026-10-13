@@ -1,0 +1,1 @@
+"""Calories Tracker application package."""
