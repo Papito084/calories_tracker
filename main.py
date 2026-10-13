@@ -376,6 +376,17 @@ def index_page():
       letter-spacing: -0.5px;
     }
 
+    .brand-badge {
+      background: linear-gradient(135deg, #22c55e, #10b981);
+      color: #000;
+      font-size: 0.65rem;
+      font-weight: 900;
+      padding: 4px 7px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
     .icon-btn {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -1048,7 +1059,8 @@ def index_page():
   <!-- Top Navigation Header -->
   <header class="top-bar">
     <div class="brand">
-      <span>Calories Tracker</span>
+      <span>Calories</span>
+      <span class="brand-badge">Tracker</span>
     </div>
     <div style="display: flex; gap: 8px;">
       <button class="icon-btn" onclick="openProfileModal()" title="Editar Perfil / Metas">
