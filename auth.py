@@ -46,6 +46,12 @@ class RegistrationCredentials(LoginCredentials):
     password: str = Field(min_length=12, max_length=1024)
 
 
+class AccountProfilePayload(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    first_name: str = Field(default="", max_length=100)
+    last_name: str = Field(default="", max_length=100)
+
+
 def hash_password(password: str) -> str:
     """Hash passwords with Argon2id."""
     return pwd_context.hash(password)
@@ -247,3 +253,36 @@ async def login(credentials: LoginCredentials) -> JSONResponse:
     finally:
         conn.close()
     return _auth_response(user_id, first_time=False)
+
+
+@router.get("/api/account-profile")
+async def get_account_profile(user_id: int = Depends(get_current_user)) -> dict[str, object]:
+    account = database.get_user_account(user_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+    return {"account": account}
+
+
+@router.put("/api/account-profile")
+async def update_account_profile(
+    data: AccountProfilePayload,
+    user_id: int = Depends(get_current_user),
+) -> dict[str, object]:
+    username = data.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username is required")
+
+    try:
+        account = database.update_user_account(
+            user_id=user_id,
+            username=username,
+            first_name=data.first_name.strip(),
+            last_name=data.last_name.strip(),
+        )
+    except Exception as exc:
+        if _is_unique_violation(exc):
+            raise HTTPException(status_code=409, detail="Username already taken") from exc
+        if isinstance(exc, LookupError):
+            raise HTTPException(status_code=404, detail="Account not found") from exc
+        raise
+    return {"status": "ok", "account": account}

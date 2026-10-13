@@ -1468,26 +1468,34 @@ def index_page():
 <div id="modal-settings" class="modal-overlay">
   <div class="sheet-card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h3 style="font-size: 1.2rem; font-weight: 800;">Ajustes del Sistema</h3>
+      <h3 style="font-size: 1.2rem; font-weight: 800;">Perfil de la cuenta</h3>
       <button class="icon-btn" onclick="closeModal('modal-settings')">
         <i data-lucide="x" style="width: 18px; height: 18px;"></i>
       </button>
     </div>
 
-    <div style="background: #1a1e27; padding: 16px; border-radius: 16px; margin-bottom: 16px;">
-      <div style="font-weight: 700; margin-bottom: 4px;">Modo de Red Local (Móvil)</div>
-      <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-        Servidor listo en <b>host="0.0.0.0:8000"</b>. Abre en tu navegador de Android usando tu IP local: <code>http://192.168.1.22:8000</code>.
-      </div>
-    </div>
+    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin: 0 0 20px;">
+      Actualiza tu nombre y el usuario que utilizas para iniciar sesión.
+    </p>
 
-    <div style="background: #1a1e27; padding: 16px; border-radius: 16px; margin-bottom: 24px;">
-      <div style="font-weight: 700; margin-bottom: 4px;">IA Multimodal Visión</div>
-      <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-        Conectado con <b>Gemini 2.5 Flash</b> mediante la API Key oficial configurada en <code>.env</code>.
+    <form id="account-profile-form">
+      <div class="form-group">
+        <label class="form-label" for="account-first-name">Nombre</label>
+        <input type="text" id="account-first-name" class="input-field" autocomplete="given-name" maxlength="100">
       </div>
-    </div>
+      <div class="form-group">
+        <label class="form-label" for="account-last-name">Apellidos</label>
+        <input type="text" id="account-last-name" class="input-field" autocomplete="family-name" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="account-username">Usuario para iniciar sesión</label>
+        <input type="text" id="account-username" class="input-field" autocomplete="username" maxlength="80" required>
+      </div>
+      <button id="account-profile-save" class="btn-primary" type="submit">Guardar cambios</button>
+    </form>
 
+    <div style="border-top: 1px solid var(--card-border); margin: 24px 0 16px;"></div>
+    <div style="font-weight: 700; margin-bottom: 10px;">Datos de la aplicación</div>
     <button class="btn-secondary" style="color: var(--danger); background: rgba(239, 68, 68, 0.1);" onclick="resetAllData()">
       Reiniciar Todos los Datos y Perfil
     </button>
@@ -1554,6 +1562,7 @@ def index_page():
 <!-- Scripts -->
 <script>
   let currentProfile = null;
+  let currentAccount = null;
   let authMode = 'login';
   function getAuthHeaders() {
     return {};
@@ -1585,6 +1594,10 @@ def index_page():
     document.getElementById('auth-credentials-form').addEventListener('submit', event => {
       event.preventDefault();
       authMode === 'register' ? submitRegister() : submitLogin();
+    });
+    document.getElementById('account-profile-form').addEventListener('submit', event => {
+      event.preventDefault();
+      saveAccountProfile();
     });
     configureGoogleAuth();
     fetchDashboard();
@@ -1630,6 +1643,50 @@ def index_page():
 
   function openSettingsModal() {
     openModal('modal-settings');
+    loadAccountProfile();
+  }
+
+  async function loadAccountProfile() {
+    try {
+      const res = await apiFetch('/api/account-profile');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || 'No se pudo cargar el perfil de la cuenta');
+      }
+      const data = await res.json();
+      currentAccount = data.account;
+      document.getElementById('account-first-name').value = currentAccount.first_name || '';
+      document.getElementById('account-last-name').value = currentAccount.last_name || '';
+      document.getElementById('account-username').value = currentAccount.username || '';
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Error cargando el perfil de la cuenta');
+    }
+  }
+
+  async function saveAccountProfile() {
+    const saveButton = document.getElementById('account-profile-save');
+    saveButton.disabled = true;
+    try {
+      const res = await apiFetch('/api/account-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: document.getElementById('account-first-name').value.trim(),
+          last_name: document.getElementById('account-last-name').value.trim(),
+          username: document.getElementById('account-username').value.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudieron guardar los cambios');
+      currentAccount = data.account;
+      showToast('Perfil de la cuenta actualizado');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Error guardando el perfil de la cuenta');
+    } finally {
+      saveButton.disabled = false;
+    }
   }
 
   function openWeightModal() {

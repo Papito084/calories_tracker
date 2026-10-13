@@ -192,9 +192,64 @@ def init_db() -> None:
                 "ON users(google_sub)"
             )
             cursor.execute("INSERT INTO schema_migrations (version) VALUES (?)", (2,))
+        if schema_version < 3:
+            if is_postgres():
+                cursor.execute(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_schema = current_schema() AND table_name = 'users'"
+                )
+                user_columns = {row["column_name"] for row in cursor.fetchall()}
+            else:
+                cursor.execute("PRAGMA table_info(users)")
+                user_columns = {row["name"] for row in cursor.fetchall()}
+            for column in ("first_name", "last_name"):
+                if column not in user_columns:
+                    cursor.execute(
+                        f"ALTER TABLE users ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
+                    )
+            cursor.execute("INSERT INTO schema_migrations (version) VALUES (?)", (3,))
         conn.commit()
     finally:
         conn.close()
+
+
+def get_user_account(user_id: int) -> Optional[Dict[str, Any]]:
+    """Retrieve the editable account details for a user."""
+    with closing(get_db_connection()) as conn:
+        cursor = get_cursor(conn)
+        cursor.execute(
+            "SELECT id, username, first_name, last_name FROM users WHERE id = ?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+    return dict(row) if row else None
+
+
+def update_user_account(
+    user_id: int,
+    username: str,
+    first_name: str,
+    last_name: str,
+) -> Dict[str, Any]:
+    """Update account identity fields without changing credentials or nutrition data."""
+    with closing(get_db_connection()) as conn:
+        cursor = get_cursor(conn)
+        cursor.execute(
+            """
+            UPDATE users
+            SET username = ?, first_name = ?, last_name = ?
+            WHERE id = ?
+            """,
+            (username, first_name, last_name, user_id),
+        )
+        if cursor.rowcount == 0:
+            raise LookupError("User account not found")
+        conn.commit()
+    account = get_user_account(user_id)
+    if account is None:
+        raise LookupError("User account not found")
+    return account
+
 
 def get_user_profile(user_id: int) -> Optional[Dict[str, Any]]:
     """Retrieve the profile for the given user_id, or None if not set."""
