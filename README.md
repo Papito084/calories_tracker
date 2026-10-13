@@ -82,7 +82,8 @@ calories_tracker/
 ├── pyproject.toml
 ├── render.yaml
 ├── requirements-dev.txt
-└── requirements.txt
+├── requirements.txt
+└── main.py                         # Entrada compatible con configuración previa de Render
 ```
 
 ## Datos y persistencia

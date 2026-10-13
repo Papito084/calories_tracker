@@ -54,6 +54,13 @@ def test_google_sign_in_is_optional_when_not_configured(client):
     assert status.json() == {"enabled": False}
 
 
+def test_legacy_render_entry_point_imports_application(test_environment):
+    from app.main import app as package_app
+    from main import app as legacy_app
+
+    assert legacy_app is package_app
+
+
 def test_settings_and_mobile_layout_render_nickname_and_responsive_rules(client):
     page = client.get("/")
 
