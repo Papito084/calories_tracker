@@ -2,7 +2,6 @@
 Multimodal Vision service to scan food dishes and extract nutritional JSON.
 Sends real image bytes directly to Google Gemini (or OpenAI) with strict error reporting.
 """
-import os
 import json
 import re
 import base64

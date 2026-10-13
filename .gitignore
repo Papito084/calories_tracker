@@ -1,18 +1,30 @@
-# Ignore environment and build files
+# Environment and secrets
 .env
 .env.*
 !.env.example
+
+# Python
 __pycache__/
-*.pyc
-.idea/
-.vscode/
-.DS_Store
+*.py[cod]
+*$py.class
 .venv/
+venv/
+env/
+
+# Local databases and SQLite sidecar files
 *.db
 *.db-journal
 *.db-shm
 *.db-wal
 
-# Ignore user data directories
-Downloads/
-OneDrive/
+# Test and lint artifacts
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
