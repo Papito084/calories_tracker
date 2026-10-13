@@ -1,4 +1,4 @@
-# Cal Tracker
+# Calories Tracker
 
 API de seguimiento de calorías y nutrición con FastAPI. Incluye perfiles por usuario, registro de comidas y peso, cálculo de objetivos y análisis opcional de imágenes con Gemini o OpenAI.
 

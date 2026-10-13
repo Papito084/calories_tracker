@@ -1,6 +1,6 @@
 """
-Cal AI - Main Application Entrypoint
-FastAPI application with custom mobile-first Cal AI UI, onboarding flow,
+Calories Tracker - Main Application Entrypoint
+FastAPI application with custom mobile-first nutrition tracking UI, onboarding flow,
 metabolic calculation, multimodal food camera scanner, weight charts, and meal edit/delete capabilities.
 """
 import base64
@@ -279,7 +279,7 @@ def reset_profile(current_user: int = Depends(get_current_user)):
     return {"status": "ok"}
 
 # -------------------------------------------------------------
-# Frontend Mobile-First Single-Page Application (Cal AI Experience)
+# Frontend mobile-first single-page application.
 # -------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
@@ -291,7 +291,7 @@ def index_page():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0d0f12">
-  <title>Cal AI — Visual Food & Calorie Tracker</title>
+  <title>Calories Tracker — Nutrición y progreso</title>
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -374,16 +374,6 @@ def index_page():
       font-size: 1.25rem;
       font-weight: 800;
       letter-spacing: -0.5px;
-    }
-
-    .brand-badge {
-      background: linear-gradient(135deg, #22c55e, #10b981);
-      color: #000;
-      font-size: 0.65rem;
-      font-weight: 900;
-      padding: 3px 6px;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
     }
 
     .icon-btn {
@@ -705,7 +695,7 @@ def index_page():
       opacity: 0.4;
     }
 
-    /* Bottom Action Bar (Cal AI Camera & Gallery Dual Triggers) */
+    /* Bottom Action Bar (Camera & Gallery Dual Triggers) */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -1058,8 +1048,7 @@ def index_page():
   <!-- Top Navigation Header -->
   <header class="top-bar">
     <div class="brand">
-      <span>Cal AI</span>
-      <span class="brand-badge">PRO</span>
+      <span>Calories Tracker</span>
     </div>
     <div style="display: flex; gap: 8px;">
       <button class="icon-btn" onclick="openProfileModal()" title="Editar Perfil / Metas">
@@ -1455,7 +1444,7 @@ def index_page():
         </div>
       </div>
 
-      <button class="btn-primary" onclick="finishOnboarding()">Calcular Mi Plan Cal AI</button>
+      <button class="btn-primary" onclick="finishOnboarding()">Calcular mi plan</button>
       <button class="btn-secondary" onclick="goToStep(2)">Atrás</button>
     </div>
   </div>
@@ -1494,7 +1483,7 @@ def index_page():
 </div>
 
 <!-- FULL-SCREEN AUTHENTICATION FLOW -->
-<div id="modal-login" class="modal-overlay fullscreen-flow open" role="dialog" aria-modal="true" aria-label="Acceso a Cal AI">
+<div id="modal-login" class="modal-overlay fullscreen-flow open" role="dialog" aria-modal="true" aria-label="Acceso a Calories Tracker">
   <div class="sheet-card">
     <section id="auth-welcome" class="auth-screen">
       <img
@@ -1505,7 +1494,7 @@ def index_page():
         alt="Plato saludable con seguimiento de calorías, nutrientes y objetivo de peso"
         fetchpriority="high"
       >
-      <div class="auth-brand">Cal AI</div>
+      <div class="auth-brand">Calories Tracker</div>
       <h1 class="auth-title">Tu progreso,<br>sin complicaciones.</h1>
       <p class="auth-description">Inicia sesión para continuar o crea una cuenta y configura tu plan personal.</p>
       <button id="google-auth-welcome" class="btn-secondary auth-action-button" style="display: none;" onclick="startGoogleLogin()">
@@ -1529,7 +1518,7 @@ def index_page():
 
     <section id="auth-form" class="auth-screen" style="display: none;">
       <button class="auth-back" onclick="showAuthWelcome()">← Volver</button>
-      <div class="auth-brand">Cal AI</div>
+      <div class="auth-brand">Calories Tracker</div>
       <h1 id="auth-form-title" class="auth-title">Iniciar sesión</h1>
       <p id="auth-form-description" class="auth-description">Accede a tu diario y continúa con tus objetivos.</p>
       <form id="auth-credentials-form">
@@ -1668,7 +1657,7 @@ def index_page():
       renderDashboard(data.profile, data.summary, data.meals, data.weight_history || []);
     } catch (err) {
       console.error(err);
-      showToast('Error conectando con el servidor Cal AI');
+      showToast('Error conectando con Calories Tracker');
     }
   }
 
@@ -2246,6 +2235,6 @@ def index_page():
 """
 
 if __name__ == "__main__":
-    print(f"Starting Cal AI on http://{settings.HOST}:{settings.PORT} ...")
+    print(f"Starting Calories Tracker on http://{settings.HOST}:{settings.PORT} ...")
     uvicorn.run(app, host=settings.HOST, port=settings.PORT)
 # End of file (cleaned)

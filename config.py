@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(dotenv_path=BASE_DIR / ".env", override=False)
 
 class Settings:
-    APP_NAME: str = "Cal AI"
+    APP_NAME: str = "Calories Tracker"
     APP_VERSION: str = "1.0.0"
     HOST: str = "0.0.0.0"
     PORT: int = int(os.getenv("PORT", 8001))

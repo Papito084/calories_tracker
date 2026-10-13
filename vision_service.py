@@ -14,7 +14,7 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
-VISION_PROMPT = """Eres el analista nutricional y experto en reconocimiento visual de alimentos por IA de Cal AI.
+VISION_PROMPT = """Eres el analista nutricional y experto en reconocimiento visual de alimentos por IA de Calories Tracker.
 Tu tarea es analizar la comida real que aparece en esta imagen con máxima precisión visual.
 
 INSTRUCCIONES CLAVE DE RECONOCIMIENTO GASTRONÓMICO:
