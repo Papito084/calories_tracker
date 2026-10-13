@@ -18,7 +18,11 @@ logger = logging.getLogger(__name__)
 def _safe_error_summary(exc: Exception) -> str:
     """Keep provider diagnostics useful without ever logging configured API keys."""
     summary = " ".join(str(exc).split())
-    for secret in (settings.GEMINI_API_KEY, settings.OPENAI_API_KEY):
+    for secret in (
+        settings.GEMINI_API_KEY,
+        settings.OPENAI_API_KEY,
+        settings.GROQ_API_KEY,
+    ):
         if secret:
             summary = summary.replace(secret, "[REDACTED]")
     return summary[:300] or "no further details"
@@ -120,7 +124,7 @@ def analyze_with_gemini(image_bytes: bytes, mime_type: str = "image/jpeg", api_k
     req_data = json.dumps(payload).encode("utf-8")
 
     last_error = None
-    deadline = time.monotonic() + 18
+    deadline = time.monotonic() + 12
     for model in CANDIDATE_MODELS:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
@@ -169,7 +173,7 @@ def analyze_with_openai(image_bytes: bytes, mime_type: str = "image/jpeg", api_k
         raise ValueError("OPENAI_API_KEY no encontrada en .env")
 
     from openai import OpenAI
-    client = OpenAI(api_key=key, timeout=10, max_retries=0)
+    client = OpenAI(api_key=key, timeout=8, max_retries=0)
     base64_img = base64.b64encode(image_bytes).decode("utf-8")
 
     response = client.chat.completions.create(
@@ -196,6 +200,49 @@ def analyze_with_openai(image_bytes: bytes, mime_type: str = "image/jpeg", api_k
     content = response.choices[0].message.content
     return extract_json_from_text(content)
 
+
+def analyze_with_groq(image_bytes: bytes, mime_type: str = "image/jpeg", api_key: Optional[str] = None) -> Dict[str, Any]:
+    """Analyze an image using Groq's OpenAI-compatible vision API."""
+    key = api_key or settings.GROQ_API_KEY
+    if not key:
+        raise ValueError("GROQ_API_KEY no encontrada en .env")
+
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key=key,
+        base_url="https://api.groq.com/openai/v1",
+        timeout=8,
+        max_retries=0,
+    )
+    base64_img = base64.b64encode(image_bytes).decode("utf-8")
+    response = client.chat.completions.create(
+        model="qwen/qwen3.8-27b",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": VISION_PROMPT},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{base64_img}",
+                        },
+                    },
+                ],
+            }
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.2,
+        max_completion_tokens=1024,
+    )
+
+    content = response.choices[0].message.content
+    if not content:
+        raise ValueError("Groq returned an empty response")
+    return extract_json_from_text(content)
+
+
 def analyze_food_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> Dict[str, Any]:
     """Try configured vision providers in order and report unavailable service clearly."""
     errors = []
@@ -206,6 +253,17 @@ def analyze_food_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> Dic
             errors.append(f"Gemini: {type(exc).__name__}")
             logger.warning(
                 "Gemini image analysis failed (%s): %s",
+                type(exc).__name__,
+                _safe_error_summary(exc),
+            )
+
+    if settings.GROQ_API_KEY:
+        try:
+            return analyze_with_groq(image_bytes, mime_type, settings.GROQ_API_KEY)
+        except Exception as exc:
+            errors.append(f"Groq: {type(exc).__name__}")
+            logger.warning(
+                "Groq image analysis failed (%s): %s",
                 type(exc).__name__,
                 _safe_error_summary(exc),
             )

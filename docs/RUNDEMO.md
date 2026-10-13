@@ -53,7 +53,8 @@ Copia el resultado en `.env` como valor de `JWT_SECRET`. No lo compartas ni lo s
 | `GOOGLE_CLIENT_SECRET` | No | Secreto OAuth privado de Google. |
 | `GOOGLE_REDIRECT_URI` | No | Callback, normalmente `https://<dominio>/auth/google/callback`. |
 | `GEMINI_API_KEY` | No | Habilita análisis de imágenes con Gemini. |
-| `OPENAI_API_KEY` | No | Habilita OpenAI como alternativa si Gemini falla. |
+| `GROQ_API_KEY` | No | Habilita Groq como alternativa si Gemini falla. |
+| `OPENAI_API_KEY` | No | Habilita OpenAI como alternativa si los proveedores anteriores fallan. |
 | `CORS_ORIGINS` | No | Orígenes web permitidos, separados por comas. |
 | `PORT` | No | Puerto HTTP; por defecto, `8001` en local. |
 
@@ -108,7 +109,7 @@ Variables habituales del servicio en producción:
 - `JWT_SECRET`: secreto privado, generado o configurado desde Render.
 - `COOKIE_SECURE=true`: cookies seguras para HTTPS.
 - `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`: solo si habilitas Google.
-- `GEMINI_API_KEY` o `OPENAI_API_KEY`: solo si habilitas el análisis de fotos.
+- `GEMINI_API_KEY`, `GROQ_API_KEY` o `OPENAI_API_KEY`: solo si habilitas el análisis de fotos. Se prueban en ese orden y los proveedores posteriores sirven como alternativa si falla uno anterior.
 
 ## Migrar una base SQLite a PostgreSQL
 

@@ -14,3 +14,4 @@ def test_environment(tmp_path_factory):
     os.environ.pop("GOOGLE_REDIRECT_URI", None)
     os.environ.pop("GEMINI_API_KEY", None)
     os.environ.pop("OPENAI_API_KEY", None)
+    os.environ.pop("GROQ_API_KEY", None)

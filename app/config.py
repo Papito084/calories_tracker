@@ -25,6 +25,7 @@ class Settings:
     # AI API Keys
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "").strip()
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "").strip()
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "").strip()
 
     # Model configuration
     JWT_SECRET: str = os.getenv("JWT_SECRET", "").strip()
