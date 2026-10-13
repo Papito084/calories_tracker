@@ -184,6 +184,14 @@ def init_db() -> None:
                 "ON weight_logs(user_id, date_logged)"
             )
             cursor.execute("INSERT INTO schema_migrations (version) VALUES (?)", (1,))
+        if schema_version < 2:
+            cursor.execute("ALTER TABLE users ADD COLUMN google_sub TEXT")
+            cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
+            cursor.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub "
+                "ON users(google_sub)"
+            )
+            cursor.execute("INSERT INTO schema_migrations (version) VALUES (?)", (2,))
         conn.commit()
     finally:
         conn.close()

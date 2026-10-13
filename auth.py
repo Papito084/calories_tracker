@@ -1,25 +1,40 @@
 """Authentication utilities and routes for Cal Tracker."""
 
+import hashlib
+import logging
+import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from fastapi import APIRouter, Cookie, Depends, HTTPException
+from authlib.integrations.base_client.errors import OAuthError
+from authlib.integrations.starlette_client import OAuth
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 import database
 from config import settings
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 pwd_context = CryptContext(
     schemes=["argon2", "sha256_crypt"],
     deprecated="sha256_crypt",
 )
 bearer_scheme = HTTPBearer(auto_error=False)
 TOKEN_LIFETIME = timedelta(days=1)
+oauth = OAuth()
+if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
+    oauth.register(
+        name="google",
+        client_id=settings.GOOGLE_CLIENT_ID,
+        client_secret=settings.GOOGLE_CLIENT_SECRET,
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+        client_kwargs={"scope": "openid email profile"},
+    )
 
 
 class LoginCredentials(BaseModel):
@@ -70,6 +85,11 @@ def _auth_response(user_id: int, first_time: bool) -> JSONResponse:
     response = JSONResponse(
         content={"user_id": user_id, "access_token": token, "first_time": first_time}
     )
+    _set_access_cookie(response, token)
+    return response
+
+
+def _set_access_cookie(response: RedirectResponse | JSONResponse, token: str) -> None:
     response.set_cookie(
         key="access_token",
         value=token,
@@ -79,6 +99,89 @@ def _auth_response(user_id: int, first_time: bool) -> JSONResponse:
         max_age=int(TOKEN_LIFETIME.total_seconds()),
         path="/",
     )
+
+
+def _get_or_create_google_user(subject: str, email: str) -> int:
+    conn = database.get_db_connection()
+    try:
+        cursor = database.get_cursor(conn)
+        cursor.execute("SELECT id FROM users WHERE google_sub = ?", (subject,))
+        row = cursor.fetchone()
+        if row:
+            cursor.execute(
+                "UPDATE users SET email = ? WHERE id = ?",
+                (email, row["id"]),
+            )
+            conn.commit()
+            return row["id"]
+
+        username = f"google_{hashlib.sha256(subject.encode()).hexdigest()[:32]}"
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, google_sub, email) "
+            "VALUES (?, ?, ?, ?)",
+            (username, hash_password(secrets.token_urlsafe(48)), subject, email),
+        )
+        user_id = cursor.lastrowid
+        conn.commit()
+        return user_id
+    except Exception as exc:
+        conn.rollback()
+        if _is_unique_violation(exc):
+            cursor = database.get_cursor(conn)
+            cursor.execute("SELECT id FROM users WHERE google_sub = ?", (subject,))
+            row = cursor.fetchone()
+            if row:
+                return row["id"]
+        raise
+    finally:
+        conn.close()
+
+
+@router.get("/api/auth/google/status")
+async def google_auth_status() -> dict[str, bool]:
+    return {
+        "enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET)
+    }
+
+
+@router.get("/auth/google")
+async def google_login(request: Request):
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="Google sign-in is not configured")
+    redirect_uri = settings.GOOGLE_REDIRECT_URI or str(
+        request.url_for("google_callback")
+    )
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/auth/google/callback", name="google_callback")
+async def google_callback(request: Request):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError as exc:
+        logger.info("Google OAuth authorization was not completed: %s", exc.error)
+        return RedirectResponse("/?auth_error=google", status_code=303)
+
+    user_info = token.get("userinfo")
+    if not user_info:
+        raise HTTPException(status_code=401, detail="Google did not return user information")
+    subject = user_info.get("sub")
+    email = user_info.get("email")
+    if (
+        not isinstance(subject, str)
+        or not subject
+        or not isinstance(email, str)
+        or not email
+        or user_info.get("email_verified") is not True
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="A verified Google email address is required",
+        )
+
+    user_id = _get_or_create_google_user(subject, email)
+    response = RedirectResponse("/", status_code=303)
+    _set_access_cookie(response, create_access_token(user_id))
     return response
 
 

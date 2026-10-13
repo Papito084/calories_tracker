@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from auth import get_current_user, router as auth_router
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field
 import uvicorn
@@ -67,6 +68,13 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
+)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.JWT_SECRET,
+    max_age=600,
+    same_site="lax",
+    https_only=settings.COOKIE_SECURE,
 )
 
 # Global exception handler
@@ -1462,6 +1470,7 @@ def index_page():
       <div class="auth-brand">Cal AI</div>
       <h1 class="auth-title">Tu progreso,<br>sin complicaciones.</h1>
       <p class="auth-description">Inicia sesión para continuar o crea una cuenta y configura tu plan personal.</p>
+      <button id="google-auth-welcome" class="btn-secondary" style="display: none;" onclick="startGoogleLogin()">Continuar con Google</button>
       <button class="btn-primary" onclick="showAuthForm('login')">Iniciar sesión</button>
       <button class="btn-secondary" onclick="showAuthForm('register')">Registrarme</button>
     </section>
@@ -1521,6 +1530,7 @@ def index_page():
       event.preventDefault();
       authMode === 'register' ? submitRegister() : submitLogin();
     });
+    configureGoogleAuth();
     fetchDashboard();
   });
 
@@ -1577,6 +1587,11 @@ def index_page():
   // Dashboard Loader
   async function fetchDashboard() {
     try {
+      const query = new URLSearchParams(window.location.search);
+      if (query.get('auth_error') === 'google') {
+        showToast('No se pudo completar el acceso con Google. Inténtalo de nuevo.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
       const res = await apiFetch('/api/dashboard');
       if (res.status === 401) {
         openLoginModal();
@@ -2070,6 +2085,22 @@ def index_page():
     document.getElementById('auth-welcome').style.display = 'block';
     document.getElementById('auth-username').value = '';
     document.getElementById('auth-password').value = '';
+  }
+
+  async function configureGoogleAuth() {
+    try {
+      const response = await fetch('/api/auth/google/status');
+      if (!response.ok) throw new Error('No se pudo comprobar el acceso con Google');
+      const config = await response.json();
+      document.getElementById('google-auth-welcome').style.display =
+        config.enabled ? 'block' : 'none';
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  function startGoogleLogin() {
+    window.location.assign('/auth/google');
   }
 
   function showAuthForm(mode) {

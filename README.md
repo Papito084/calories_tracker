@@ -22,6 +22,8 @@ Variables opcionales:
 - `DATABASE_PATH`: ruta del archivo SQLite.
 - `GEMINI_API_KEY` y `OPENAI_API_KEY`: proveedores de análisis de comida (Gemini se intenta primero).
 - `COOKIE_SECURE`: `true` cuando se sirve por HTTPS; en Render ya está habilitado.
+- `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`: credenciales OAuth de Google; al configurarlas aparece la opción “Continuar con Google”.
+- `GOOGLE_REDIRECT_URI`: URI de callback opcional; si se deja vacía, se calcula usando el dominio de la solicitud.
 - `CORS_ORIGINS`: lista separada por comas de los orígenes web externos autorizados. Déjala vacía para el uso desde el mismo origen.
 
 ## Despliegue en Render
@@ -36,6 +38,17 @@ python migrate_sqlite_to_postgres.py --source ".\cal_ai.db"
 ```
 
 El proceso no modifica el archivo SQLite y se puede repetir sin duplicar filas con el mismo ID. Haz primero una copia de seguridad y comprueba el recuento de datos antes de cambiar el tráfico de producción. Mantén `DATABASE_URL` privada y no la guardes en el repositorio.
+
+### Acceso con Google
+
+1. En Google Cloud Console, crea un proyecto, configura la pantalla de consentimiento OAuth y crea un cliente OAuth de tipo **Web application**.
+2. En **Authorized redirect URIs**, añade `https://tu-servicio.onrender.com/auth/google/callback` (reemplaza el dominio por el tuyo).
+3. En el servicio web de Render → **Environment**, añade `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` con los valores del cliente OAuth, y `GOOGLE_REDIRECT_URI` con exactamente la URI de callback anterior.
+4. Guarda los cambios y espera a que Render redepliegue el servicio. La bienvenida mostrará “Continuar con Google”.
+
+Si la pantalla de consentimiento sigue en modo **Testing**, añade tu cuenta de Google como usuario de prueba en Google Cloud Console.
+
+La aplicación solo acepta cuentas con correo verificado por Google y guarda su identificador estable para futuras entradas. Una primera entrada crea una cuenta separada y continúa al cuestionario; no se fusiona automáticamente con una cuenta previa aunque use el mismo correo. Las claves OAuth son secretos: no las subas a GitHub ni las compartas.
 
 ## Autenticación y datos
 

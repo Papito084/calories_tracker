@@ -28,6 +28,9 @@ class Settings:
 
     # Model configuration
     JWT_SECRET: str = os.getenv("JWT_SECRET", "").strip()
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "").strip()
     COOKIE_SECURE: bool = os.getenv(
         "COOKIE_SECURE", "true" if os.getenv("RENDER") else "false"
     ).lower() in {"1", "true", "yes"}
