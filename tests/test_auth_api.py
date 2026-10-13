@@ -1,7 +1,11 @@
+import asyncio
 import sqlite3
+from io import BytesIO
+from time import sleep
 from uuid import uuid4
 
 import pytest
+from PIL import Image
 from fastapi.testclient import TestClient
 
 
@@ -52,6 +56,108 @@ def test_google_sign_in_is_optional_when_not_configured(client):
 
     assert status.status_code == 200
     assert status.json() == {"enabled": False}
+
+
+def test_food_scan_runs_provider_off_event_loop(client, monkeypatch):
+    from app import main
+
+    username = f"scan-{uuid4().hex}"
+    registration = client.post(
+        "/api/register",
+        json={"username": username, "password": "a-secure-test-password-123"},
+    )
+    assert registration.status_code == 200
+
+    image = BytesIO()
+    Image.new("RGB", (2, 2), color="white").save(image, format="PNG")
+    analysis = {"dish_name": "Test meal", "total_calories": 100}
+    provider_calls = []
+
+    def fake_analyze_food_image(contents, mime_type):
+        provider_calls.append((contents, mime_type))
+        return analysis
+
+    original_to_thread = asyncio.to_thread
+    dispatched_functions = []
+
+    async def tracked_to_thread(function, *args, **kwargs):
+        dispatched_functions.append(function)
+        return await original_to_thread(function, *args, **kwargs)
+
+    monkeypatch.setattr(main.vision_service, "analyze_food_image", fake_analyze_food_image)
+    monkeypatch.setattr(main.asyncio, "to_thread", tracked_to_thread)
+
+    response = client.post(
+        "/api/scan-food",
+        files={"file": ("meal.png", image.getvalue(), "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["analysis"] == analysis
+    assert provider_calls == [(image.getvalue(), "image/png")]
+    assert dispatched_functions == [fake_analyze_food_image]
+
+
+def test_food_scan_provider_errors_return_json(client, monkeypatch):
+    from app import main
+
+    registration = client.post(
+        "/api/register",
+        json={
+            "username": f"scan-error-{uuid4().hex}",
+            "password": "a-secure-test-password-123",
+        },
+    )
+    assert registration.status_code == 200
+
+    image = BytesIO()
+    Image.new("RGB", (2, 2), color="white").save(image, format="PNG")
+
+    def fail_analysis(contents, mime_type):
+        raise RuntimeError("Provider request failed")
+
+    monkeypatch.setattr(main.vision_service, "analyze_food_image", fail_analysis)
+
+    response = client.post(
+        "/api/scan-food",
+        files={"file": ("meal.png", image.getvalue(), "image/png")},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Food analysis is temporarily unavailable"
+
+
+def test_food_scan_timeout_returns_json_instead_of_losing_worker(client, monkeypatch):
+    from app import main
+
+    registration = client.post(
+        "/api/register",
+        json={
+            "username": f"scan-timeout-{uuid4().hex}",
+            "password": "a-secure-test-password-123",
+        },
+    )
+    assert registration.status_code == 200
+
+    image = BytesIO()
+    Image.new("RGB", (2, 2), color="white").save(image, format="PNG")
+
+    def slow_analysis(contents, mime_type):
+        sleep(0.1)
+        return {}
+
+    monkeypatch.setattr(main, "_FOOD_ANALYSIS_TIMEOUT_SECONDS", 0.01)
+    monkeypatch.setattr(main.vision_service, "analyze_food_image", slow_analysis)
+
+    response = client.post(
+        "/api/scan-food",
+        files={"file": ("meal.png", image.getvalue(), "image/png")},
+    )
+
+    assert response.status_code == 504
+    assert response.json()["detail"] == (
+        "El análisis de la imagen tardó demasiado. Inténtalo de nuevo."
+    )
 
 
 def test_legacy_render_entry_point_imports_application(test_environment):

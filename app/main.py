@@ -3,6 +3,7 @@ Calories Tracker - Main Application Entrypoint
 FastAPI application with custom mobile-first nutrition tracking UI, onboarding flow,
 metabolic calculation, multimodal food camera scanner, weight charts, and meal edit/delete capabilities.
 """
+import asyncio
 import base64
 import logging
 from datetime import date
@@ -24,6 +25,7 @@ from .config import settings
 from . import database, nutrition_calc, vision_service
 
 logger = logging.getLogger(__name__)
+_FOOD_ANALYSIS_TIMEOUT_SECONDS = 30
 
 database.init_db()
 
@@ -195,7 +197,23 @@ async def scan_food(
         raise HTTPException(status_code=400, detail="Invalid or unreadable image") from exc
 
     try:
-        analysis = vision_service.analyze_food_image(contents, mime_type=mime_type)
+        analysis = await asyncio.wait_for(
+            asyncio.to_thread(
+                vision_service.analyze_food_image,
+                contents,
+                mime_type=mime_type,
+            ),
+            timeout=_FOOD_ANALYSIS_TIMEOUT_SECONDS,
+        )
+    except TimeoutError as exc:
+        logger.warning(
+            "Food image analysis exceeded the %s-second request limit",
+            _FOOD_ANALYSIS_TIMEOUT_SECONDS,
+        )
+        raise HTTPException(
+            status_code=504,
+            detail="El análisis de la imagen tardó demasiado. Inténtalo de nuevo.",
+        ) from exc
     except Exception as exc:
         logger.exception("Food image analysis failed")
         raise HTTPException(status_code=503, detail="Food analysis is temporarily unavailable") from exc
@@ -2151,7 +2169,16 @@ def index_page():
         method: 'POST',
         body: formData
       });
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(
+          res.ok
+            ? 'El servidor devolvió una respuesta no válida.'
+            : `El servidor respondió con un error HTTP ${res.status}.`
+        );
+      }
       if (!res.ok) {
         throw new Error(data.detail || 'Fallo en la llamada a la IA');
       }
@@ -2162,9 +2189,8 @@ def index_page():
       displayScanResult(currentScanData);
     } catch (err) {
       console.error(err);
-      alert('Error de IA: ' + err.message);
-      showToast('Error: ' + err.message);
       closeModal('modal-scan');
+      showToast('Error de IA: ' + err.message);
     } finally {
       event.target.value = '';
     }

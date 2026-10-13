@@ -8,6 +8,7 @@ import base64
 import logging
 import urllib.request
 import urllib.error
+import time
 from typing import Dict, Any, Optional
 from .config import settings
 
@@ -109,7 +110,11 @@ def analyze_with_gemini(image_bytes: bytes, mime_type: str = "image/jpeg", api_k
     req_data = json.dumps(payload).encode("utf-8")
 
     last_error = None
+    deadline = time.monotonic() + 18
     for model in CANDIDATE_MODELS:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
         req = urllib.request.Request(
             url,
@@ -118,7 +123,7 @@ def analyze_with_gemini(image_bytes: bytes, mime_type: str = "image/jpeg", api_k
             method="POST"
         )
         try:
-            with urllib.request.urlopen(req, timeout=30) as response:
+            with urllib.request.urlopen(req, timeout=min(10, remaining)) as response:
                 res_json = json.loads(response.read().decode("utf-8"))
                 candidate = res_json.get("candidates", [])[0]
                 raw_text = candidate.get("content", {}).get("parts", [])[0].get("text", "")
@@ -154,7 +159,7 @@ def analyze_with_openai(image_bytes: bytes, mime_type: str = "image/jpeg", api_k
         raise ValueError("OPENAI_API_KEY no encontrada en .env")
 
     from openai import OpenAI
-    client = OpenAI(api_key=key)
+    client = OpenAI(api_key=key, timeout=10, max_retries=0)
     base64_img = base64.b64encode(image_bytes).decode("utf-8")
 
     response = client.chat.completions.create(
