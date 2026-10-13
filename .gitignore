@@ -1,0 +1,18 @@
+# Ignore environment and build files
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.DS_Store
+.venv/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Ignore user data directories
+Downloads/
+OneDrive/

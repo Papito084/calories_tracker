@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: cal-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 2 --access-logfile - --error-logfile - -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
+    plan: free
+    region: oregon
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cal-ai-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+databases:
+  - name: cal-ai-db
+    databaseName: cal_ai
+    user: cal_ai
+    plan: basic-256mb
+    region: oregon
