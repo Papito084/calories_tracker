@@ -205,7 +205,7 @@ async def scan_food(
             ),
             timeout=_FOOD_ANALYSIS_TIMEOUT_SECONDS,
         )
-    except TimeoutError as exc:
+    except asyncio.TimeoutError as exc:
         logger.warning(
             "Food image analysis exceeded the %s-second request limit",
             _FOOD_ANALYSIS_TIMEOUT_SECONDS,

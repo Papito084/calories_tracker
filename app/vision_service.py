@@ -14,6 +14,16 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
+
+def _safe_error_summary(exc: Exception) -> str:
+    """Keep provider diagnostics useful without ever logging configured API keys."""
+    summary = " ".join(str(exc).split())
+    for secret in (settings.GEMINI_API_KEY, settings.OPENAI_API_KEY):
+        if secret:
+            summary = summary.replace(secret, "[REDACTED]")
+    return summary[:300] or "no further details"
+
+
 VISION_PROMPT = """Eres el analista nutricional y experto en reconocimiento visual de alimentos por IA de Calories Tracker.
 Tu tarea es analizar la comida real que aparece en esta imagen con máxima precisión visual.
 
@@ -194,14 +204,22 @@ def analyze_food_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> Dic
             return analyze_with_gemini(image_bytes, mime_type, settings.GEMINI_API_KEY)
         except Exception as exc:
             errors.append(f"Gemini: {type(exc).__name__}")
-            logger.warning("Gemini image analysis failed (%s)", type(exc).__name__)
+            logger.warning(
+                "Gemini image analysis failed (%s): %s",
+                type(exc).__name__,
+                _safe_error_summary(exc),
+            )
 
     if settings.OPENAI_API_KEY:
         try:
             return analyze_with_openai(image_bytes, mime_type, settings.OPENAI_API_KEY)
         except Exception as exc:
             errors.append(f"OpenAI: {type(exc).__name__}")
-            logger.warning("OpenAI image analysis failed (%s)", type(exc).__name__)
+            logger.warning(
+                "OpenAI image analysis failed (%s): %s",
+                type(exc).__name__,
+                _safe_error_summary(exc),
+            )
 
     reason = "; ".join(errors) if errors else "no provider API key is configured"
     return {"error": f"Food analysis is unavailable ({reason})"}
